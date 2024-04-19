@@ -1,0 +1,46 @@
+pipeline {
+    agent any
+    tools {
+        maven 'localMaven'
+    }
+    stages {
+        stage('Clone codebase') {
+            steps {
+                echo 'Clone github repos'
+                git 'https://github.com/fredgarcia/maven-project.git'
+            }
+        }
+        stage('compile'){
+            steps {
+                withMaven(maven:'localMaven')
+                {
+                    bat 'mvn compile'
+                }
+            }
+        }
+        stage('test'){
+            steps {
+                withMaven(maven:'localMaven')
+                {
+                    bat 'mvn test'
+                }
+            }
+        }
+        stage('build'){
+            steps {
+                withMaven(maven:'localMaven')
+                {
+                    bat 'mvn -B -DskipTests clean package'
+                }
+            }
+        }
+        stage('Build and send result to sonar'){
+            steps {
+                withSonarQubeEnv(installationName:'localSonar', credentialsId:'TOKEN4Sonar')
+                {
+                    bat 'mvn -B -DskipTests clean package sonar:sonar'
+                }
+            }
+        }
+    }
+}
